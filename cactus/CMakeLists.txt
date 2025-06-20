@@ -4,6 +4,9 @@ project(cactus_core)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Option to disable Metal compilation for CI environments
+option(DISABLE_METAL "Disable Metal GPU backend compilation" OFF)
+
 set(CACTUS_CORE_SOURCES
     cactus_context.cpp
     cactus_loader.cpp
@@ -73,7 +76,7 @@ set(CACTUS_CORE_SOURCES
     tools/mtmd/mtmd-helper.cpp
 )
 
-if(APPLE)
+if(APPLE AND NOT DISABLE_METAL)
     list(APPEND CACTUS_CORE_SOURCES ggml-metal.m)
 endif()
 
@@ -95,7 +98,7 @@ target_compile_definitions(cactus_core_lib PUBLIC
     CACTUS_VERBOSE=0
 )
 
-if(APPLE)
+if(APPLE AND NOT DISABLE_METAL)
     find_library(FOUNDATION_LIBRARY Foundation)
     find_library(ACCELERATE_FRAMEWORK Accelerate)
     find_library(METAL_LIBRARY Metal)
@@ -119,6 +122,20 @@ if(APPLE)
         target_compile_definitions(cactus_core_lib PUBLIC
             LM_GGML_USE_METAL
             LM_GGML_METAL_USE_BF16
+        )
+    endif()
+elseif(APPLE AND DISABLE_METAL)
+    # On Apple platforms with Metal disabled, still use Accelerate framework for CPU optimization
+    find_library(FOUNDATION_LIBRARY Foundation)
+    find_library(ACCELERATE_FRAMEWORK Accelerate)
+    
+    if(FOUNDATION_LIBRARY AND ACCELERATE_FRAMEWORK)
+        target_link_libraries(cactus_core_lib PUBLIC
+            ${FOUNDATION_LIBRARY}
+            ${ACCELERATE_FRAMEWORK}
+        )
+        target_compile_definitions(cactus_core_lib PUBLIC
+            LM_GGML_USE_ACCELERATE
         )
     endif()
 endif()
