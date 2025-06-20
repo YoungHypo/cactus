@@ -28,7 +28,7 @@ jobs:
       run: |
         cd cactus
         mkdir -p build && cd build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DGGML_METAL=OFF
+        cmake .. -DCMAKE_BUILD_TYPE=Release
         make -j$(nproc)
 
     - name: Build C++ Examples
@@ -45,9 +45,6 @@ jobs:
         done
 
     - name: Test Executable Functionality
-      env:
-        GGML_METAL_DISABLE: 1
-        GGML_USE_CPU_ONLY: 1
       run: |
         cd examples/cpp/build
         for exe in cactus_llm cactus_embed cactus_vlm cactus_vlm_ffi cactus_tts; do

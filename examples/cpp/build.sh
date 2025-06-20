@@ -3,4 +3,8 @@ cd build
 cmake ..
 make
 
-ln -sf ../../../cactus/ggml-llama.metallib default.metallib
+# Create Metal library symlink only if not in CI environment
+if [[ "$CI" != "true" && "$GITHUB_ACTIONS" != "true" ]]; then
+    ln -sf ../../../cactus/ggml-llama.metallib default.metallib
+    echo "Created Metal library symlink"
+fi
