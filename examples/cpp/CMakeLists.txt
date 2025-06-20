@@ -9,6 +9,9 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Option to disable Metal compilation for CI environments
+option(DISABLE_METAL "Disable Metal GPU backend compilation" OFF)
+
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
 )

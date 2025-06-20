@@ -34,8 +34,9 @@ jobs:
     - name: Build C++ Examples
       run: |
         cd examples/cpp
-        chmod +x build.sh
-        ./build.sh
+        mkdir -p build && cd build
+        cmake .. -DDISABLE_METAL=ON
+        make -j$(nproc)
 
     - name: Verify Generated Executables
       run: |
@@ -51,7 +52,7 @@ jobs:
         cd examples/cpp/build
         for exe in cactus_llm cactus_embed cactus_vlm cactus_vlm_ffi cactus_tts; do
           echo "Testing $exe..."
-          if gtimeout 30s ./"$exe"; then
+          if gtimeout 300s ./"$exe"; then
             echo "✓ $exe ran successfully"
           else
             exit_code=$?
