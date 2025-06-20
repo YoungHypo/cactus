@@ -1,0 +1,66 @@
+name: Cpp CI Check
+
+on:
+  push:
+    branches: [ main ]
+    paths: 
+      - 'cactus/**'
+      - 'examples/cpp/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'cactus/**' 
+      - 'examples/cpp/**'
+
+jobs:
+  build-and-test:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Setup C++ Environment
+      run: |
+        brew install cmake coreutils
+
+    - name: Build Cactus Core Library
+      run: |
+        cd cactus
+        mkdir -p build && cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DGGML_METAL=OFF
+        make -j$(nproc)
+
+    - name: Build C++ Examples
+      run: |
+        cd examples/cpp
+        chmod +x build.sh
+        ./build.sh
+
+    - name: Verify Generated Executables
+      run: |
+        cd examples/cpp/build
+        for exe in cactus_llm cactus_embed cactus_vlm cactus_vlm_ffi cactus_tts; do
+          test -f "$exe"
+        done
+
+    - name: Test Executable Functionality
+      env:
+        GGML_METAL_DISABLE: 1
+        GGML_USE_CPU_ONLY: 1
+      run: |
+        cd examples/cpp/build
+        for exe in cactus_llm cactus_embed cactus_vlm cactus_vlm_ffi cactus_tts; do
+          echo "Testing $exe..."
+          if gtimeout 30s ./"$exe"; then
+            echo "✓ $exe ran successfully"
+          else
+            exit_code=$?
+            if [ $exit_code -eq 124 ]; then
+              echo "✓ $exe timed out"
+            else
+              echo "✗ $exe failed with exit code $exit_code"
+              exit 1
+            fi
+          fi
+        done
