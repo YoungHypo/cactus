@@ -38,29 +38,24 @@ jobs:
         cmake .. -DDISABLE_METAL=ON
         make -j$(nproc)
 
-    - name: Verify Generated Executables
+    - name: Verify Executables
       run: |
         cd examples/cpp/build
         for exe in cactus_llm cactus_embed cactus_vlm cactus_vlm_ffi cactus_tts; do
           test -f "$exe"
         done
 
-    - name: Test Executable Functionality
-      env:
-        LM_GGML_METAL_NO_RESIDENCY: 1
-      run: |
-        cd examples/cpp/build
-        for exe in cactus_llm cactus_embed cactus_vlm cactus_vlm_ffi cactus_tts; do
-          echo "Testing $exe..."
-          if gtimeout 300s ./"$exe"; then
-            echo "✓ $exe ran successfully"
-          else
-            exit_code=$?
-            if [ $exit_code -eq 124 ]; then
-              echo "✓ $exe timed out"
-            else
-              echo "✗ $exe failed with exit code $exit_code"
-              exit 1
-            fi
-          fi
-        done
+    - name: Test cactus_llm
+      run: chmod +x scripts/test-cpp-executables.sh && ./scripts/test-cpp-executables.sh cactus_llm
+
+    - name: Test cactus_embed
+      run: ./scripts/test-cpp-executables.sh cactus_embed
+
+    - name: Test cactus_vlm
+      run: ./scripts/test-cpp-executables.sh cactus_vlm
+
+    - name: Test cactus_vlm_ffi
+      run: ./scripts/test-cpp-executables.sh cactus_vlm_ffi
+
+    - name: Test cactus_tts
+      run: ./scripts/test-cpp-executables.sh cactus_tts
